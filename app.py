@@ -229,24 +229,7 @@ def nuevo():
             filename_detras = secure_filename(imagen_detras.filename)
             imagen_detras.save(os.path.join(UPLOAD_FOLDER, filename_detras))
 
-        # EVITAR DUPLICADOS
-        existente = conn.execute(
-            'SELECT * FROM monedas WHERE valor=? AND tipo=? AND pais=? AND anio=?',
-            (valor, tipo, pais, anio)
-        ).fetchone()
-
-        if existente:
-            conn.close()
-            flash("Esta moneda ya está registrada", "error")
-            return render_template(
-                'nuevo.html',
-                tipos=tipos,
-                paises=paises,
-                anios=anios,
-                valores=valores
-            )
-
-        # INSERTAR
+                # INSERTAR
         conn.execute(
             '''
             INSERT INTO monedas
