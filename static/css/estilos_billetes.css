@@ -1,0 +1,54 @@
+/* ---------- GENERAL ---------- */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#f8f5ef;
+    font-family:Segoe UI, Arial, sans-serif;
+    color:#333;
+}
+
+.container{
+    width:95%;
+    max-width:1400px;
+    margin:auto;
+    padding:30px 0;
+}
+
+h1{
+    text-align:center;
+    font-size:3rem;
+    color:#b8860b;
+    margin-bottom:30px;
+}
+
+/* ---------- CABECERA ---------- */
+
+.header-buttons{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-bottom:30px;
+}
+
+.header-buttons a,
+.header-buttons button{
+    background:#c8a64b;
+    color:white;
+    text-decoration:none;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.header-buttons a:hover,
+.header-buttons button:hover{
+    opacity:.9;
+}
+

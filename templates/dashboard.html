@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Colección Premium</title>
+    <!-- Tu ruta corregida -->
+    <link rel="stylesheet" href="static/css/dashboard-estilos.css">
+    <!-- Fuente elegante de Google Fonts para calcar la tipografía cinematográfica -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:ital,wght@0,300;1,300&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Elementos decorativos del fondo (Brújula y Lupa conceptuales opcionales) -->
+    <div class="decoracion-fondo"></div>
+
+    <div class="container">
+
+        <div class="showcase-grid">
+            
+    <div class="modulo-vitrina">
+        <div class="vitrina-cristal">
+            <div class="velvet-interior">
+                <div class="contenido-expositor">
+                    <div class="texto-lado">
+                        <h2>Monedas</h2>
+                    </div>
+                    <img src="https://nihilnovum.wordpress.com/wp-content/uploads/2010/02/lechuza.gif" class="img-coleccion moneda-retro">
+                </div>
+                <p class="subtext">Ver colección de monedas</p>
+                <div class="punto-luz"></div>
+            </div>
+        </div>
+        <div class="base-madera">
+            <a href="{{ url_for('index') }}" class="placa-bronce">Ver Catálogo<br>Completo</a>
+        </div>
+    </div>
+
+    <div class="modulo-vitrina">
+        <div class="vitrina-cristal">
+            <div class="velvet-interior">
+                <div class="contenido-expositor">
+                    <div class="texto-lado">
+                        <h2>Billetes</h2>
+                    </div>
+                    <img src="https://elnumismatico.com/imagenes-productos/4OVTCDhOICiO-filename.jpg" class="img-coleccion billetes-retro">
+                </div>
+                <p class="subtext">Ver colección de billetes</p>
+                <div class="punto-luz"></div>
+            </div>
+        </div>
+        <div class="base-madera">
+            <a href="{{ url_for('billetes') }}" class="placa-bronce">Ver Catálogo<br>Completo</a>
+        </div>
+    </div>
+
+</div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>
