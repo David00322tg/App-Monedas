@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Añadir Nueva Moneda</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos-agregar.css') }}" />
+</head>
+<body>
+  <div class="container">
+    <h1>Añadir Nueva Moneda</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages">
+          {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data" novalidate>
+      <div>
+  <label>Valor *</label>
+
+  <select name="valor_existente">
+      <option value="">Seleccionar valor </option>
+
+      {% for valor in valores %}
+          <option value="{{ valor }}">
+              {{ valor }}
+          </option>
+      {% endfor %}
+  </select>
+
+  <input
+      type="text"
+      name="valor_nuevo"
+      placeholder="O añadir nuevo valor"
+  >
+</div>
+
+      <div>
+  <label>Tipo *</label>
+
+  <select name="tipo_existente">
+      <option value="">Seleccionar tipo</option>
+
+      {% for tipo in tipos %}
+          <option value="{{ tipo }}">
+              {{ tipo }}
+          </option>
+      {% endfor %}
+  </select>
+
+  <input
+      type="text"
+      name="tipo_nuevo"
+      placeholder="O añadir nuevo tipo"
+  >
+</div>
+
+      <div>
+  <label>País *</label>
+
+  <select name="pais_existente">
+      <option value="">Seleccionar país</option>
+
+      {% for pais in paises %}
+          <option value="{{ pais }}">
+              {{ pais }}
+          </option>
+      {% endfor %}
+  </select>
+
+  <input
+      type="text"
+      name="pais_nuevo"
+      placeholder="O añadir nuevo país"
+  >
+</div>
+<div>
+  <label for="anio">Año *</label>
+
+  <select id="anio" name="anio">
+      <option value="">Seleccionar año</option>
+
+      {% for anio in anios %}
+          <option value="{{ anio }}">{{ anio }}</option>
+      {% endfor %}
+
+      <option value="otro">Otro...</option>
+  </select>
+
+  <input
+      type="number"
+      id="anio_otro"
+      name="anio_otro"
+      min="1870"
+      max="2026"
+      placeholder="Escribe el año"
+      style="display:none; margin-top:8px;"
+  >
+</div>
+
+<script>
+  const select = document.getElementById("anio");
+  const input = document.getElementById("anio_otro");
+
+  select.addEventListener("change", function () {
+    if (this.value === "otro") {
+      input.style.display = "block";
+      input.required = true;
+    } else {
+      input.style.display = "none";
+      input.required = false;
+      input.value = "";
+    }
+  });
+</script>
+
+      <div>
+        <label for="rareza">Rareza</label>
+        <input type="text" id="rareza" name="rareza" placeholder="Ej: Común, Rara..." />
+      </div>
+
+      <div>
+        <label for="historia">Historia</label>
+        <textarea id="historia" name="historia" rows="5" placeholder="Escribe aquí la historia..."></textarea>
+      </div>
+
+      <div>
+        <label for="imagen">Imagen delantera</label>
+        <input type="file" id="imagen" name="imagen" accept="image/*" />
+      </div>
+
+      <div>
+        <label for="imagen_detras">Imagen trasera</label>
+        <input type="file" id="imagen_detras" name="imagen_detras" accept="image/*" />
+      </div>
+
+      <button type="submit">Guardar moneda</button>
+      <a href="{{ url_for('catalogo') }}">Cancelar</a>
+    </form>
+  </div>
+</body>
+</html>

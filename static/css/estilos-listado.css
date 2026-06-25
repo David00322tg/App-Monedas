@@ -25,6 +25,10 @@ h1{
     color:#b8860b;
     margin-bottom:30px;
 }
+.gris {
+    filter: grayscale(100%);
+    opacity: 0.4;
+}
 
 /* ---------- CABECERA ---------- */
 
@@ -82,9 +86,9 @@ h1{
 }
 
 .ultima-imagen img{
-    width:180px;
-    height:180px;
-    object-fit:cover;
+    width:280px;
+    height:280px;
+    object-fit:contain;
     border-radius:15px;
 }
 

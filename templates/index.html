@@ -11,12 +11,24 @@
 </head>
 <body>
   <div class="container">
+<!-- PROGRESO COLECCIÓN -->
+<div class="progreso">
+
+  <h3>Progreso de colección</h3>
+
+  <div class="barra">
+    <div class="relleno" style="width: {{ porcentaje }}%"></div>
+  </div>
+
+  <p>{{ tienes }} / {{ total }} monedas ({{ porcentaje }}%)</p>
+
+</div>
     <!-- Botón cerrar sesión -->
     <div class="header-buttons">
     <form method="POST" action="{{ url_for('logout') }}">
         <button type="submit">Cerrar sesión</button>
     </form>
-    <a href="{{ url_for('nuevo') }}">Añadir Nueva Moneda</a>
+    <a href="{{ url_for('nuevo_moneda') }}">Añadir Nueva Moneda</a>
 <a href="{{ url_for('dashboard') }}" class="btn-volver">
     ← Volver al menú principal
 </a>
@@ -57,16 +69,20 @@
 
     </div>
 
-    {% if ultima_moneda['imagen'] %}
+{% if ultima_moneda['imagen'] %}
 <div class="ultima-imagen">
-    <img src="{{ url_for('static', filename='imagenes/' ~ ultima_moneda['imagen']) }}">
+
+    {% if ultima_moneda['tipo'] in ['Euro','Céntimos'] %}
+        <img src="{{ url_for('static', filename='imagenes/' ~ ultima_moneda['imagen_detras']) }}">
+    {% else %}
+        <img src="{{ url_for('static', filename='imagenes/' ~ ultima_moneda['imagen']) }}">
+    {% endif %}
+
 </div>
 {% endif %}
 
 </div>
-
 {% endif %}
-
     <!-- Formulario de filtro -->
     <form method="GET" action="{{ url_for('index') }}" class="filter-form">
       <div class="filter-group">
@@ -110,23 +126,16 @@
 
 <div class="moneda-card">
 
-    <div class="coin-viewer">
+<div class="coin-viewer">
 
     <img
-        src="{{ url_for('static', filename='imagenes/' ~ moneda.imagen) }}"
+        src="{% if moneda.tipo in ['Euro','Céntimos'] %}
+{{ url_for('static', filename='imagenes/' ~ moneda.imagen_detras) }}{% else %}{{ url_for('static', filename='imagenes/' ~ moneda.imagen) }}{% endif %}"
         class="coin-image"
         data-frente="{{ url_for('static', filename='imagenes/' ~ moneda.imagen) }}"
         data-detras="{{ url_for('static', filename='imagenes/' ~ moneda.imagen_detras) }}"
-        data-side="front"
+        data-side="{% if moneda.tipo == 'Euro' %}back{% else %}front{% endif %}"
         onclick="openModal(this)">
-
-    {% if moneda.imagen_detras %}
-    <button type="button"
-            class="btn-flip"
-            onclick="flipCoin(this)">
-        Ver reverso
-    </button>
-    {% endif %}
 
 </div>
    <div class="datos-moneda">

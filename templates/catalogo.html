@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Mi Catálogo</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos-listado.css') }}" />
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="titulo-principal">
+    <h1>Mi Catálogo</h1>
+  </div>
+
+  <!-- BOTONES -->
+  <div class="header-buttons">
+
+    <form method="POST" action="{{ url_for('logout') }}">
+      <button type="submit">Cerrar sesión</button>
+    </form>
+
+    <a href="{{ url_for('nuevo_catalogo') }}">Añadir Nueva Moneda</a>
+
+    <a href="{{ url_for('dashboard') }}" class="btn-volver">
+      ← Volver al menú principal
+    </a>
+
+  </div>
+
+  <!-- ÚLTIMA MONEDA -->
+  {% if ultima_moneda %}
+  <div class="ultima-moneda">
+
+    <div class="ultima-info">
+
+      <h2>Última moneda añadida</h2>
+
+      <div class="ultima-datos">
+
+        <div><strong>Valor</strong><span>{{ ultima_moneda['valor'] }}</span></div>
+        <div><strong>Tipo</strong><span>{{ ultima_moneda['tipo'] }}</span></div>
+        <div><strong>País</strong><span>{{ ultima_moneda['pais'] }}</span></div>
+        <div><strong>Año</strong><span>{{ ultima_moneda['anio'] }}</span></div>
+
+      </div>
+
+    </div>
+
+    {% if ultima_moneda['imagen'] %}
+    <div class="ultima-imagen">
+
+      <img src="{{ url_for('static', filename='catalogo/' ~ ultima_moneda['imagen']) }}">
+
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+
+  <!-- FILTROS -->
+  <form method="GET" action="{{ url_for('catalogo') }}" class="filter-form">
+
+    <div class="filter-group">
+      <label>Tipo:</label>
+      <select name="filter_tipo">
+        <option value="">-- Todos --</option>
+        {% for tipo in tipos_moneda %}
+          <option value="{{ tipo }}" {% if tipo == filter_tipo %}selected{% endif %}>{{ tipo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Año:</label>
+      <input type="number" name="filter_anio" value="{{ filter_anio or '' }}">
+    </div>
+
+    <div class="filter-group">
+      <label>País:</label>
+      <select name="filter_pais">
+        <option value="">-- Todos --</option>
+        {% for pais in paises_moneda %}
+          <option value="{{ pais }}" {% if pais == filter_pais %}selected{% endif %}>{{ pais }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Valor:</label>
+      <input type="number" step="0.01" name="filter_valor" value="{{ filter_valor or '' }}">
+    </div>
+
+    <div class="filter-group">
+      <button type="submit">Aplicar filtro</button>
+    </div>
+
+  </form>
+
+
+  <!-- MONEDAS -->
+  <div class="monedas-grid">
+
+  {% if monedas %}
+
+    {% for moneda in monedas %}
+
+    <div class="moneda-card">
+
+      <div class="coin-viewer">
+
+
+<img
+  src="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
+  class="coin-image"
+  data-frente="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
+  data-detras="{{ url_for('static', filename='catalogo/' ~ moneda.imagen_detras) }}"
+  data-side="front"
+  onclick="openModal(this)"
+>
+      </div>
+
+      <div class="datos-moneda">
+
+        <div class="badge-valor">{{ moneda.valor }}</div>
+        <div class="dato">🌍 {{ moneda.pais }}</div>
+        <div class="dato">📅 {{ moneda.anio }}</div>
+        <div class="dato">💎 {{ moneda.rareza or 'Común' }}</div>
+        <div class="dato">{{ moneda.tipo }}</div>
+
+      </div>
+
+      <div class="acciones">
+
+        <a href="{{ url_for('editar_catalogo', moneda_id=moneda.id) }}" class="btn-editar">
+          Editar
+        </a>
+
+        <form method="POST"  action="{{ url_for('borrar_catalogo', moneda_id=moneda.id) }}">
+          <button type="submit" class="btn-borrar"
+                  onclick="return confirm('¿Seguro que quieres borrar esta moneda?');">
+            Borrar
+          </button>
+        </form>
+
+      </div>
+
+    </div>
+
+    {% endfor %}
+
+  {% else %}
+
+    <div class="sin-monedas">
+      No hay monedas que mostrar.
+    </div>
+
+  {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- MODAL -->
+<div id="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
+  <img id="modal-img" style="max-width:90%; max-height:90%; cursor:pointer;">
+</div>
+
+
+<script>
+let currentImg = null;
+
+document.querySelectorAll('.coin-image').forEach(img => {
+
+  let startX = 0;
+
+  img.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+  });
+
+  img.addEventListener('touchend', e => {
+    let endX = e.changedTouches[0].clientX;
+
+    if (Math.abs(endX - startX) > 50) {
+
+      if (img.dataset.side === "front") {
+        img.src = img.dataset.detras;
+        img.dataset.side = "back";
+      } else {
+        img.src = img.dataset.frente;
+        img.dataset.side = "front";
+      }
+
+    }
+
+  });
+
+});
+
+function openModal(imgElement) {
+
+  currentImg = imgElement;
+
+  const modal = document.getElementById('modal');
+  const modalImg = document.getElementById('modal-img');
+
+  modalImg.src = imgElement.dataset.frente;
+  modal.style.display = 'flex';
+
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target.id === 'modal') {
+    this.style.display = 'none';
+    currentImg = null;
+  }
+});
+</script>
+
+</body>
+</html>
