@@ -201,9 +201,39 @@ h1{
     margin-bottom:15px;
 }
 
+.badge-rareza {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: gold;
+  font-weight: bold;
+}
+
 .datos-moneda p{
     margin:10px 0;
     font-size:16px;
+}
+.gris{
+
+    filter: grayscale(100%);
+    opacity:.35;
+
+}
+
+.tengo{
+
+    color:green;
+    font-weight:bold;
+    margin-top:10px;
+
+}
+
+.falta{
+
+    color:#999;
+    font-weight:bold;
+    margin-top:10px;
+
 }
 
 /* ---------- ACCIONES ---------- */
@@ -271,4 +301,17 @@ h1{
     h1{
         font-size:2rem;
     }
+}
+/*-----------------BARRA PROGRESO------------*/
+.barra {
+    height: 20px;
+    background: #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.progreso {
+    height: 100%;
+    background: linear-gradient(gold, #d6a300);
 }

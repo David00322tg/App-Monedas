@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_from_directory, flash
 import sqlite3
 import os
+from collections import defaultdict
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -371,19 +372,16 @@ def nuevo_catalogo():
         valores_moneda=valores
     )
 
-
-
 @app.route('/catalogo')
 def catalogo():
-    if 'user' not in session:
-        return redirect(url_for('login'))
 
     filter_tipo = request.args.get('filter_tipo', '').strip()
     filter_anio = request.args.get('filter_anio', '').strip()
     filter_pais = request.args.get('filter_pais', '').strip()
     filter_valor = request.args.get('filter_valor', '').strip()
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("monedas.db")
+    conn.row_factory = sqlite3.Row
 
     query = "SELECT * FROM catalogo WHERE 1=1"
     params = []
@@ -404,89 +402,65 @@ def catalogo():
         query += " AND valor LIKE ?"
         params.append(f"%{filter_valor}%")
 
-    query += " ORDER BY id DESC"
+    query += " ORDER BY pais, valor, anio"
 
     catalogo = conn.execute(query, params).fetchall()
 
-    ultima_moneda = conn.execute(
-        "SELECT * FROM catalogo ORDER BY id DESC LIMIT 1"
-    ).fetchone()
+    # 🔥 IMPORTANTE: ahora sí traemos rareza
+    mis_monedas = conn.execute(
+        "SELECT valor, tipo, pais, anio, rareza FROM monedas"
+    ).fetchall()
 
-    tipos_moneda = [
-        row['tipo']
-        for row in conn.execute(
-            'SELECT DISTINCT tipo FROM catalogo'
-        ).fetchall()
-    ]
+    monedas = []
 
-    paises_moneda = [
-        row['pais']
-        for row in conn.execute(
-            'SELECT DISTINCT pais FROM catalogo'
-        ).fetchall()
-    ]
+    for moneda in catalogo:
 
-    anios_moneda = [
-        row['anio']
-        for row in conn.execute(
-            'SELECT DISTINCT anio FROM catalogo ORDER BY anio DESC'
-        ).fetchall()
-    ]
+        tengo = False
 
-    valores_moneda = [
-        row['valor']
-        for row in conn.execute(
-            'SELECT DISTINCT valor FROM catalogo ORDER BY valor'
-        ).fetchall()
-    ]
+        for mia in mis_monedas:
+            if (
+                moneda["valor"] == mia["valor"] and
+                moneda["tipo"] == mia["tipo"] and
+                moneda["pais"] == mia["pais"] and
+                moneda["anio"] == mia["anio"] and
+                moneda["rareza"] == mia["rareza"]
+            ):
+                tengo = True
+                break
+
+        moneda = dict(moneda)
+        moneda["tengo"] = tengo
+        monedas.append(moneda)
+
+    agrupadas = defaultdict(list)
+
+    for m in monedas:
+        agrupadas[m["pais"]].append(m)
+
+    total = len(catalogo)
+    conseguidas = len([m for m in monedas if m["tengo"]])
+
+    tipos_moneda = conn.execute("SELECT DISTINCT tipo FROM catalogo").fetchall()
+    paises_moneda = conn.execute("SELECT DISTINCT pais FROM catalogo").fetchall()
+    anios_moneda = conn.execute("SELECT DISTINCT anio FROM catalogo").fetchall()
+    valores_moneda = conn.execute("SELECT DISTINCT valor FROM catalogo").fetchall()
 
     conn.close()
 
     return render_template(
-        'catalogo.html',
-        monedas=catalogo,
-        ultima_moneda=ultima_moneda,
-        tipos_moneda=tipos_moneda,
-        paises_moneda=paises_moneda,
-        anios_moneda=anios_moneda,
-        valores_moneda=valores_moneda,
+        "catalogo.html",
+        agrupadas=agrupadas,
+        total=total,
+        conseguidas=conseguidas,
         filter_tipo=filter_tipo,
         filter_anio=filter_anio,
         filter_pais=filter_pais,
-        filter_valor=filter_valor
-)
-
-@app.route('/editar_moneda/<int:moneda_id>', methods=['GET', 'POST'])
-def editar_moneda(moneda_id):
-    conn = get_db_connection()
-    moneda = conn.execute('SELECT * FROM monedas WHERE id=?', (moneda_id,)).fetchone()
-
-    if not moneda:
-        flash("Moneda no encontrada", "error")
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        valor = request.form['valor']
-        tipo = request.form['tipo']
-        pais = request.form['pais']
-        anio = request.form['anio']
-        rareza = request.form.get('rareza')
-        historia = request.form.get('historia')
-
-        conn.execute("""
-            UPDATE monedas
-            SET valor=?, tipo=?, pais=?, anio=?, rareza=?, historia=?
-            WHERE id=?
-        """, (valor, tipo, pais, anio, rareza, historia, moneda_id))
-
-        conn.commit()
-        conn.close()
-
-        flash("Moneda actualizada con éxito", "success")
-        return redirect(url_for('index'))
-
-    conn.close()
-    return render_template('editar_moneda.html', moneda=moneda)
+        filter_valor=filter_valor,
+        tipos_moneda=[r['tipo'] for r in tipos_moneda],
+        paises_moneda=[r['pais'] for r in paises_moneda],
+        anios_moneda=[r['anio'] for r in anios_moneda],
+        valores_moneda=[r['valor'] for r in valores_moneda]
+    )
 
 @app.route('/editar_catalogo/<int:moneda_id>', methods=['GET', 'POST'])
 def editar_catalogo(moneda_id):
@@ -522,6 +496,42 @@ def editar_catalogo(moneda_id):
 
     conn.close()
     return render_template('editar_catalogo.html', moneda=moneda)
+
+@app.route('/editar_moneda/<int:moneda_id>', methods=['GET', 'POST'])
+def editar_moneda(moneda_id):
+
+    conn = get_db_connection()
+    moneda = conn.execute(
+        'SELECT * FROM monedas WHERE id=?',
+        (moneda_id,)
+    ).fetchone()
+
+    if not moneda:
+        flash("Moneda no encontrada", "error")
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        valor = request.form['valor']
+        tipo = request.form['tipo']
+        pais = request.form['pais']
+        anio = request.form['anio']
+        rareza = request.form.get('rareza')
+        historia = request.form.get('historia')
+
+        conn.execute("""
+            UPDATE monedas
+            SET valor=?, tipo=?, pais=?, anio=?, rareza=?, historia=?
+            WHERE id=?
+        """, (valor, tipo, pais, anio, rareza, historia, moneda_id))
+
+        conn.commit()
+        conn.close()
+
+        flash("Moneda actualizada con éxito", "success")
+        return redirect(url_for('index'))
+
+    conn.close()
+    return render_template('editar_moneda.html', moneda=moneda)
 
 
 @app.route('/borrar_moneda/<int:moneda_id>', methods=['POST'])

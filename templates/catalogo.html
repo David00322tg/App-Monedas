@@ -15,6 +15,13 @@
 
   <div class="titulo-principal">
     <h1>Mi Catálogo</h1>
+<div class="barra">
+  <div class="progreso"
+       style="width: {{ (conseguidas * 100 / total) | round }}%;">
+  </div>
+</div>
+
+<p>{{ conseguidas }} / {{ total }} monedas</p>
   </div>
 
   <!-- BOTONES -->
@@ -46,6 +53,8 @@
         <div><strong>Tipo</strong><span>{{ ultima_moneda['tipo'] }}</span></div>
         <div><strong>País</strong><span>{{ ultima_moneda['pais'] }}</span></div>
         <div><strong>Año</strong><span>{{ ultima_moneda['anio'] }}</span></div>
+        <div><strong>Rareza</strong><span>{{ ultima_moneda['rareza'] }}</span></div>
+
 
       </div>
 
@@ -104,65 +113,76 @@
 
 
   <!-- MONEDAS -->
-  <div class="monedas-grid">
+<div class="monedas-grid">
 
-  {% if monedas %}
+{% if agrupadas %}
 
-    {% for moneda in monedas %}
+  {% for pais, lista in agrupadas.items() %}
 
-    <div class="moneda-card">
+    <h2>{{ pais }}</h2>
 
-      <div class="coin-viewer">
+    {% for moneda in lista %}
 
+      <div class="moneda-card {% if not moneda.tengo %}bloqueada{% endif %}">
 
-<img
-  src="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
-  class="coin-image"
-  data-frente="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
-  data-detras="{{ url_for('static', filename='catalogo/' ~ moneda.imagen_detras) }}"
-  data-side="front"
-  onclick="openModal(this)"
->
+        <div class="coin-viewer">
+
+          <img class="coin-image {% if not moneda.tengo %}gris{% endif %}"
+            src="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
+            data-frente="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
+            data-detras="{{ url_for('static', filename='catalogo/' ~ moneda.imagen_detras) }}"
+            data-side="front"
+            onclick="openModal(this)"
+          >
+
+        </div>
+
+        <div class="datos-moneda">
+
+          <div class="badge-valor">{{ moneda.valor }}</div>
+          <div class="dato">🌍 {{ moneda.pais }}</div>
+          <div class="dato">📅 {{ moneda.anio }}</div>
+          <div class="badge-rareza">💎 {{ moneda.rareza or 'Común' }}</div>
+          <div class="dato">{{ moneda.tipo }}</div>
+
+          {% if moneda.tengo %}
+            <div class="estado tengo">✔ Conseguida</div>
+          {% else %}
+            <div class="estado falta">🔒 Me falta</div>
+          {% endif %}
+
+        </div>
+
+        <div class="acciones">
+
+          <a href="{{ url_for('editar_catalogo', moneda_id=moneda.id) }}"
+             class="btn-editar">
+            Editar
+          </a>
+
+          <form method="POST"
+                action="{{ url_for('borrar_catalogo', moneda_id=moneda.id) }}">
+            <button type="submit" class="btn-borrar"
+              onclick="return confirm('¿Seguro que quieres borrar esta moneda?');">
+              Borrar
+            </button>
+          </form>
+
+        </div>
+
       </div>
-
-      <div class="datos-moneda">
-
-        <div class="badge-valor">{{ moneda.valor }}</div>
-        <div class="dato">🌍 {{ moneda.pais }}</div>
-        <div class="dato">📅 {{ moneda.anio }}</div>
-        <div class="dato">💎 {{ moneda.rareza or 'Común' }}</div>
-        <div class="dato">{{ moneda.tipo }}</div>
-
-      </div>
-
-      <div class="acciones">
-
-        <a href="{{ url_for('editar_catalogo', moneda_id=moneda.id) }}" class="btn-editar">
-          Editar
-        </a>
-
-        <form method="POST"  action="{{ url_for('borrar_catalogo', moneda_id=moneda.id) }}">
-          <button type="submit" class="btn-borrar"
-                  onclick="return confirm('¿Seguro que quieres borrar esta moneda?');">
-            Borrar
-          </button>
-        </form>
-
-      </div>
-
-    </div>
 
     {% endfor %}
 
-  {% else %}
+  {% endfor %}
 
-    <div class="sin-monedas">
-      No hay monedas que mostrar.
-    </div>
+{% else %}
 
-  {% endif %}
-
+  <div class="sin-monedas">
+    No hay monedas que mostrar.
   </div>
+
+{% endif %}
 
 </div>
 
