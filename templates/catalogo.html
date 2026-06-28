@@ -26,7 +26,9 @@
 
   <!-- BOTONES -->
   <div class="header-buttons">
-
+<button id="modoOscuroBtn">
+    🌙 Modo oscuro
+</button>
     <form method="POST" action="{{ url_for('logout') }}">
       <button type="submit">Cerrar sesión</button>
     </form>
@@ -71,6 +73,12 @@
   </div>
   {% endif %}
 
+<div class="buscador">
+    <input
+        type="text"
+        id="buscarMoneda"
+        placeholder="🔍 Buscar moneda, país, año o valor...">
+</div>
 
   <!-- FILTROS -->
   <form method="GET" action="{{ url_for('catalogo') }}" class="filter-form">
@@ -105,6 +113,47 @@
       <input type="number" step="0.01" name="filter_valor" value="{{ filter_valor or '' }}">
     </div>
 
+<div class="filter-group">
+<label>Estado</label>
+
+<select name="filter_estado">
+
+<option value="">Todos</option>
+
+<option value="tengo"
+{% if filter_estado=="tengo" %}selected{% endif %}>
+Solo las que tengo
+</option>
+
+<option value="faltan"
+{% if filter_estado=="faltan" %}selected{% endif %}>
+Solo las que me faltan
+</option>
+
+</select>
+
+</div>
+
+<div class="filter-group">
+<label>Rareza</label>
+
+<select name="filter_rareza">
+
+<option value="">Todas</option>
+
+{% for r in rarezas %}
+
+<option value="{{ r }}"
+{% if r==filter_rareza %}selected{% endif %}>
+{{ r }}
+</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
     <div class="filter-group">
       <button type="submit">Aplicar filtro</button>
     </div>
@@ -119,23 +168,54 @@
 
   {% for pais, lista in agrupadas.items() %}
 
-    <h2>{{ pais }}</h2>
+<h2 class="pais-titulo">{{ pais }}</h2>
 
+<div class="barra-pais">
+
+    <div class="barra-interior"
+         style="width: {{ progreso_paises[pais].porcentaje }}%;">
+
+    </div>
+
+</div>
+
+<p class="texto-progreso">
+
+{{ progreso_paises[pais].tengo }}
+/
+{{ progreso_paises[pais].total }}
+monedas
+({{ progreso_paises[pais].porcentaje }}%)
+
+</p>
     {% for moneda in lista %}
 
       <div class="moneda-card {% if not moneda.tengo %}bloqueada{% endif %}">
 
-        <div class="coin-viewer">
+<div class="coin-viewer">
 
-          <img class="coin-image {% if not moneda.tengo %}gris{% endif %}"
-            src="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
-            data-frente="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
-            data-detras="{{ url_for('static', filename='catalogo/' ~ moneda.imagen_detras) }}"
-            data-side="front"
-            onclick="openModal(this)"
-          >
+{% if moneda.tengo %}
 
-        </div>
+<img
+    class="coin-image"
+    src="{{ url_for('static', filename='imagenes/' ~ moneda.imagen_detras) }}"
+    data-frente="{{ url_for('static', filename='imagenes/' ~ moneda.imagen) }}"
+    data-detras="{{ url_for('static', filename='imagenes/' ~ moneda.imagen_detras) }}"
+    data-side="back"
+    onclick="openModal(this)">
+{% else %}
+
+<img
+    class="coin-image gris"
+    src="{{ url_for('static', filename='catalogo/' ~ moneda.imagen_detras) }}"
+    data-frente="{{ url_for('static', filename='catalogo/' ~ moneda.imagen) }}"
+    data-detras="{{ url_for('static', filename='catalogo/' ~ moneda.imagen_detras) }}"
+    data-side="back"
+    onclick="openModal(this)">
+
+{% endif %}
+
+</div>
 
         <div class="datos-moneda">
 
@@ -191,57 +271,167 @@
 <div id="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); justify-content:center; align-items:center;">
   <img id="modal-img" style="max-width:90%; max-height:90%; cursor:pointer;">
 </div>
-
-
 <script>
+
 let currentImg = null;
 
-document.querySelectorAll('.coin-image').forEach(img => {
+// ---------- Cambiar cara ----------
+function cambiarCara(img){
 
-  let startX = 0;
+    if(img.dataset.side=="back"){
 
-  img.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-  });
-
-  img.addEventListener('touchend', e => {
-    let endX = e.changedTouches[0].clientX;
-
-    if (Math.abs(endX - startX) > 50) {
-
-      if (img.dataset.side === "front") {
-        img.src = img.dataset.detras;
-        img.dataset.side = "back";
-      } else {
         img.src = img.dataset.frente;
         img.dataset.side = "front";
-      }
+
+    }else{
+
+        img.src = img.dataset.detras;
+        img.dataset.side = "back";
 
     }
 
-  });
+}
+
+// ---------- Todas las monedas ----------
+document.querySelectorAll(".coin-image").forEach(img=>{
+
+    // PC → un clic cambia de cara
+    img.addEventListener("click",function(e){
+
+        e.stopPropagation();
+        cambiarCara(this);
+
+    });
+
+    // PC → doble clic abre el modal
+    img.addEventListener("dblclick",function(e){
+
+        e.stopPropagation();
+        openModal(this);
+
+    });
+
+    // Móvil → deslizar cambia de cara
+    let startX=0;
+
+    img.addEventListener("touchstart",e=>{
+        startX=e.touches[0].clientX;
+    });
+
+    img.addEventListener("touchend",e=>{
+
+        let endX=e.changedTouches[0].clientX;
+
+        if(Math.abs(endX-startX)>40){
+
+            cambiarCara(this);
+
+        }
+
+    });
 
 });
 
-function openModal(imgElement) {
+// ---------- Modal ----------
+function openModal(img){
 
-  currentImg = imgElement;
+    currentImg = img;
 
-  const modal = document.getElementById('modal');
-  const modalImg = document.getElementById('modal-img');
+    const modal = document.getElementById("modal");
+    const modalImg = document.getElementById("modal-img");
 
-  modalImg.src = imgElement.dataset.frente;
-  modal.style.display = 'flex';
+    modalImg.src = img.src;
+    modalImg.dataset.side = img.dataset.side;
+
+    modal.style.display="flex";
 
 }
 
-document.getElementById('modal').addEventListener('click', function(e) {
-  if (e.target.id === 'modal') {
-    this.style.display = 'none';
-    currentImg = null;
-  }
-});
-</script>
+// ---------- Cambiar cara dentro del modal ----------
+document.getElementById("modal-img").addEventListener("click",function(e){
 
+    e.stopPropagation();
+
+    if(this.dataset.side=="back"){
+
+        this.src = currentImg.dataset.frente;
+        this.dataset.side = "front";
+
+    }else{
+
+        this.src = currentImg.dataset.detras;
+        this.dataset.side = "back";
+
+    }
+
+});
+
+// ---------- Cerrar modal ----------
+document.getElementById("modal").addEventListener("click",function(e){
+
+    if(e.target.id=="modal"){
+
+        this.style.display="none";
+
+    }
+
+});
+
+// ===========================
+// BUSCADOR INSTANTÁNEO
+// ===========================
+
+const buscador = document.getElementById("buscarMoneda");
+
+buscador.addEventListener("keyup", function () {
+
+    const texto = this.value.toLowerCase();
+
+    document.querySelectorAll(".moneda-card").forEach(card => {
+
+        const contenido = card.innerText.toLowerCase();
+
+        if (contenido.includes(texto)) {
+            card.style.display = "";
+        } else {
+            card.style.display = "none";
+        }
+
+    });
+
+});
+
+// ===============================
+// MODO OSCURO
+// ===============================
+
+const btnModo = document.getElementById("modoOscuroBtn");
+
+// Cargar preferencia guardada
+if(localStorage.getItem("modo") === "oscuro"){
+    document.body.classList.add("dark-mode");
+    btnModo.textContent = "☀️ Modo claro";
+}
+
+// Cambiar modo
+btnModo.addEventListener("click",function(){
+
+    document.body.classList.toggle("dark-mode");
+
+    if(document.body.classList.contains("dark-mode")){
+
+        localStorage.setItem("modo","oscuro");
+        btnModo.textContent="☀️ Modo claro";
+
+    }else{
+
+        localStorage.setItem("modo","claro");
+        btnModo.textContent="🌙 Modo oscuro";
+
+    }
+
+});
+
+</script>
 </body>
 </html>

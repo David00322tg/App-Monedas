@@ -75,8 +75,10 @@ def billetes():
 # ----------------------
 # Rutas de monedas
 # ----------------------
+
 @app.route('/inicio')
 def index():
+
     if 'user' not in session:
         return redirect(url_for('login'))
 
@@ -87,72 +89,109 @@ def index():
 
     conn = get_db_connection()
 
-    query = 'SELECT * FROM monedas WHERE 1=1'
+    # 🔹 Consulta principal
+    query = "SELECT * FROM monedas WHERE 1=1"
     params = []
 
     if filter_tipo:
-        query += ' AND tipo = ?'
+        query += " AND tipo=?"
         params.append(filter_tipo)
 
     if filter_anio:
-        query += ' AND anio = ?'
+        query += " AND anio=?"
         params.append(filter_anio)
 
     if filter_pais:
-        query += ' AND pais = ?'
+        query += " AND pais=?"
         params.append(filter_pais)
 
     if filter_valor:
-        query += ' AND valor LIKE ?'
-        params.append('%' + filter_valor + '%')
+        query += " AND valor LIKE ?"
+        params.append(f"%{filter_valor}%")
 
-    query += ' ORDER BY anio ASC'
+    query += " ORDER BY anio ASC"
+
     monedas = conn.execute(query, params).fetchall()
 
-    catalogo = conn.execute('SELECT * FROM catalogo').fetchall()
+    # 🔥 TODAS tus monedas (las que tienes)
+    mis_monedas = conn.execute("""
+        SELECT valor, tipo, pais, anio, rareza, imagen, imagen_detras
+        FROM monedas
+    """).fetchall()
 
-    monedas_set = set((m['valor'], m['pais'], m['anio']) for m in monedas)
+    # ✔ usar set (más rápido y sin errores de dict)
+    mis_set = set(
+        (m["valor"], m["tipo"], m["pais"], m["anio"], m["rareza"])
+        for m in mis_monedas
+    )
 
-    catalogo_lista = []
-    faltan = 0
+    lista_final = []
 
-    for c in catalogo:
-        key = (c['valor'], c['pais'], c['anio'])
-        tiene = key in monedas_set
-        if not tiene:
-            faltan += 1
-        catalogo_lista.append({**dict(c), "tiene": tiene})
+    for moneda in monedas:
+        moneda = dict(moneda)
 
-    total = len(catalogo)
-    tienes = total - faltan
-    porcentaje = int((tienes / total) * 100) if total > 0 else 0
+        clave = (
+            moneda["valor"],
+            moneda["tipo"],
+            moneda["pais"],
+            moneda["anio"],
+            moneda["rareza"]
+        )
 
-    tipos_moneda = conn.execute('SELECT DISTINCT tipo FROM monedas').fetchall()
-    paises_moneda = conn.execute('SELECT DISTINCT pais FROM monedas').fetchall()
-    anios_moneda = conn.execute('SELECT DISTINCT anio FROM monedas').fetchall()
-    valores_moneda = conn.execute('SELECT DISTINCT valor FROM monedas').fetchall()
+        if clave in mis_set:
+            moneda["tengo"] = True
+
+            # opcional: coger imágenes si existen
+            mia = next(
+                (m for m in mis_monedas if
+                 m["valor"] == moneda["valor"] and
+                 m["tipo"] == moneda["tipo"] and
+                 m["pais"] == moneda["pais"] and
+                 m["anio"] == moneda["anio"] and
+                 m["rareza"] == moneda["rareza"]),
+                None
+            )
+
+            if mia:
+                moneda["imagen"] = mia["imagen"]
+                moneda["imagen_detras"] = mia["imagen_detras"]
+
+        else:
+            moneda["tengo"] = False
+
+        lista_final.append(moneda)
+
+    from collections import defaultdict
+
+    agrupadas = defaultdict(list)
+    for m in lista_final:
+        agrupadas[m["pais"]].append(m)
+
+    total = len(monedas)
+    conseguidas = sum(1 for m in lista_final if m["tengo"])
+
+    tipos_moneda = conn.execute("SELECT DISTINCT tipo FROM monedas").fetchall()
+    paises_moneda = conn.execute("SELECT DISTINCT pais FROM monedas").fetchall()
+    anios_moneda = conn.execute("SELECT DISTINCT anio FROM monedas").fetchall()
+    valores_moneda = conn.execute("SELECT DISTINCT valor FROM monedas").fetchall()
 
     conn.close()
 
     return render_template(
-        'index.html',
-        monedas=monedas,
-        catalogo=catalogo_lista,
-        porcentaje=porcentaje,
-        tienes=tienes,
-        faltan=faltan,
+        "index.html",
+        monedas=lista_final,
         total=total,
-
-        tipos_moneda=[r['tipo'] for r in tipos_moneda],
-        paises_moneda=[r['pais'] for r in paises_moneda],
-        anios_moneda=[r['anio'] for r in anios_moneda],
-        valores_moneda=[r['valor'] for r in valores_moneda],
-
+        conseguidas=conseguidas,
         filter_tipo=filter_tipo,
         filter_anio=filter_anio,
         filter_pais=filter_pais,
-        filter_valor=filter_valor
+        filter_valor=filter_valor,
+        tipos_moneda=[r["tipo"] for r in tipos_moneda],
+        paises_moneda=[r["pais"] for r in paises_moneda],
+        anios_moneda=[r["anio"] for r in anios_moneda],
+        valores_moneda=[r["valor"] for r in valores_moneda]
     )
+
 
 @app.route('/nuevo_moneda', methods=['GET', 'POST'])
 def nuevo_moneda():
@@ -371,7 +410,6 @@ def nuevo_catalogo():
         anios_moneda=anios,
         valores_moneda=valores
     )
-
 @app.route('/catalogo')
 def catalogo():
 
@@ -379,6 +417,8 @@ def catalogo():
     filter_anio = request.args.get('filter_anio', '').strip()
     filter_pais = request.args.get('filter_pais', '').strip()
     filter_valor = request.args.get('filter_valor', '').strip()
+    filter_estado = request.args.get("filter_estado", "")
+    filter_rareza = request.args.get("filter_rareza", "")
 
     conn = sqlite3.connect("monedas.db")
     conn.row_factory = sqlite3.Row
@@ -387,15 +427,15 @@ def catalogo():
     params = []
 
     if filter_tipo:
-        query += " AND tipo = ?"
+        query += " AND tipo=?"
         params.append(filter_tipo)
 
     if filter_anio:
-        query += " AND anio = ?"
+        query += " AND anio=?"
         params.append(filter_anio)
 
     if filter_pais:
-        query += " AND pais = ?"
+        query += " AND pais=?"
         params.append(filter_pais)
 
     if filter_valor:
@@ -406,44 +446,99 @@ def catalogo():
 
     catalogo = conn.execute(query, params).fetchall()
 
-    # 🔥 IMPORTANTE: ahora sí traemos rareza
-    mis_monedas = conn.execute(
-        "SELECT valor, tipo, pais, anio, rareza FROM monedas"
-    ).fetchall()
+    mis_monedas = conn.execute("""
+        SELECT valor, tipo, pais, anio, rareza, imagen, imagen_detras
+        FROM monedas
+    """).fetchall()
+
+    # Diccionario para búsqueda rápida
+    mis_dict = {
+        (m["valor"], m["tipo"], m["pais"], m["anio"], m["rareza"]): m
+        for m in mis_monedas
+    }
 
     monedas = []
 
     for moneda in catalogo:
 
-        tengo = False
-
-        for mia in mis_monedas:
-            if (
-                moneda["valor"] == mia["valor"] and
-                moneda["tipo"] == mia["tipo"] and
-                moneda["pais"] == mia["pais"] and
-                moneda["anio"] == mia["anio"] and
-                moneda["rareza"] == mia["rareza"]
-            ):
-                tengo = True
-                break
+        clave = (
+            moneda["valor"],
+            moneda["tipo"],
+            moneda["pais"],
+            moneda["anio"],
+            moneda["rareza"]
+        )
 
         moneda = dict(moneda)
-        moneda["tengo"] = tengo
+
+        if clave in mis_dict:
+            mia = mis_dict[clave]
+            moneda["imagen"] = mia["imagen"]
+            moneda["imagen_detras"] = mia["imagen_detras"]
+            moneda["tengo"] = True
+        else:
+            moneda["tengo"] = False
+
         monedas.append(moneda)
+
+    # FILTRO ESTADO
+    if filter_estado == "tengo":
+        monedas = [m for m in monedas if m["tengo"]]
+    elif filter_estado == "faltan":
+        monedas = [m for m in monedas if not m["tengo"]]
+
+    # FILTRO RAREZA
+    if filter_rareza:
+        monedas = [m for m in monedas if m["rareza"] == filter_rareza]
+
+    from collections import defaultdict
 
     agrupadas = defaultdict(list)
 
     for m in monedas:
         agrupadas[m["pais"]].append(m)
 
+    # Progreso por país
+    progreso_paises = {}
+
+    for pais, lista in agrupadas.items():
+
+        total_pais = len(lista)
+        tengo_pais = len([m for m in lista if m["tengo"]])
+
+        porcentaje = 0
+
+        if total_pais > 0:
+            porcentaje = round((tengo_pais / total_pais) * 100)
+
+        progreso_paises[pais] = {
+            "total": total_pais,
+            "tengo": tengo_pais,
+            "porcentaje": porcentaje
+        }
+
     total = len(catalogo)
     conseguidas = len([m for m in monedas if m["tengo"]])
 
-    tipos_moneda = conn.execute("SELECT DISTINCT tipo FROM catalogo").fetchall()
-    paises_moneda = conn.execute("SELECT DISTINCT pais FROM catalogo").fetchall()
-    anios_moneda = conn.execute("SELECT DISTINCT anio FROM catalogo").fetchall()
-    valores_moneda = conn.execute("SELECT DISTINCT valor FROM catalogo").fetchall()
+    tipos_moneda = conn.execute(
+        "SELECT DISTINCT tipo FROM catalogo"
+    ).fetchall()
+
+    paises_moneda = conn.execute(
+        "SELECT DISTINCT pais FROM catalogo"
+    ).fetchall()
+
+    anios_moneda = conn.execute(
+        "SELECT DISTINCT anio FROM catalogo"
+    ).fetchall()
+
+    valores_moneda = conn.execute(
+        "SELECT DISTINCT valor FROM catalogo"
+    ).fetchall()
+
+    rarezas = conn.execute(
+        "SELECT DISTINCT rareza FROM catalogo ORDER BY rareza"
+    ).fetchall()
 
     conn.close()
 
@@ -451,17 +546,20 @@ def catalogo():
         "catalogo.html",
         agrupadas=agrupadas,
         total=total,
+        progreso_paises=progreso_paises,
         conseguidas=conseguidas,
         filter_tipo=filter_tipo,
         filter_anio=filter_anio,
         filter_pais=filter_pais,
         filter_valor=filter_valor,
-        tipos_moneda=[r['tipo'] for r in tipos_moneda],
-        paises_moneda=[r['pais'] for r in paises_moneda],
-        anios_moneda=[r['anio'] for r in anios_moneda],
-        valores_moneda=[r['valor'] for r in valores_moneda]
+        filter_estado=filter_estado,
+        filter_rareza=filter_rareza,
+        rarezas=[r["rareza"] for r in rarezas],
+        tipos_moneda=[r["tipo"] for r in tipos_moneda],
+        paises_moneda=[r["pais"] for r in paises_moneda],
+        anios_moneda=[r["anio"] for r in anios_moneda],
+        valores_moneda=[r["valor"] for r in valores_moneda]
     )
-
 @app.route('/editar_catalogo/<int:moneda_id>', methods=['GET', 'POST'])
 def editar_catalogo(moneda_id):
     conn = get_db_connection()

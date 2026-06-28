@@ -315,3 +315,207 @@ h1{
     height: 100%;
     background: linear-gradient(gold, #d6a300);
 }
+/* -------- TÍTULO DEL PAÍS -------- */
+
+.pais-titulo{
+    grid-column:1/-1;
+    margin-top:40px;
+    margin-bottom:15px;
+    padding:10px 15px;
+    background:#b8860b;
+    color:white;
+    border-radius:12px;
+    font-size:28px;
+}
+
+/* -------- MONEDA NO CONSEGUIDA -------- */
+
+.bloqueada{
+    opacity:.85;
+}
+
+.coin-image.gris{
+    filter:grayscale(100%);
+    opacity:.35;
+}
+
+/* -------- ESTADO -------- */
+
+.estado{
+    margin-top:12px;
+    text-align:center;
+    font-weight:bold;
+    padding:8px;
+    border-radius:10px;
+}
+
+.estado.tengo{
+    background:#dff7df;
+    color:#138a13;
+}
+
+.estado.falta{
+    background:#ececec;
+    color:#666;
+}
+
+/* -------- HOVER -------- */
+
+.moneda-card:hover .coin-image.gris{
+    opacity:.6;
+}
+.buscador{
+    margin:20px 0;
+    text-align:center;
+}
+
+.buscador input{
+
+    width:100%;
+    max-width:600px;
+    padding:15px;
+
+    border-radius:12px;
+    border:2px solid #d4af37;
+
+    font-size:18px;
+}
+.barra-pais{
+
+    width:100%;
+    height:16px;
+
+    background:#ddd;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    margin:8px 0;
+
+}
+
+.barra-interior{
+
+    height:100%;
+
+    background:linear-gradient(90deg,#f4c430,#b8860b);
+
+}
+
+.texto-progreso{
+
+    font-size:14px;
+
+    color:#666;
+
+    margin-bottom:20px;
+
+}
+/* ===========================
+   MODO OSCURO
+=========================== */
+
+body.dark-mode{
+    background:#111827;
+    color:#f5f5f5;
+}
+
+body.dark-mode h1{
+    color:#ffd54f;
+}
+
+body.dark-mode .moneda-card{
+    background:#1f2937;
+    border:1px solid #374151;
+}
+
+body.dark-mode .ultima-moneda{
+    background:#252525;
+}
+
+body.dark-mode .filter-form{
+
+    background:#1f2937;
+
+}
+
+body.dark-mode .filter-group input,
+body.dark-mode .filter-group select{
+    background:#333;
+    color:white;
+    border:1px solid #555;
+}
+
+body.dark-mode .badge-valor{
+    background:#d4af37;
+    color:black;
+}
+
+body.dark-mode .badge-rareza{
+    background:#f5c542;
+    color:black;
+}
+
+body.dark-mode .sin-monedas{
+    background:#252525;
+}
+
+body.dark-mode .barra{
+    background:#444;
+}
+
+body.dark-mode .coin-image{
+    background:#303030;
+}
+
+body.dark-mode .btn-editar{
+    background:#333;
+    color:#ffd54f;
+    border-color:#ffd54f;
+}
+
+body.dark-mode .btn-borrar{
+    background:#333;
+}
+
+body.dark-mode .header-buttons a,
+body.dark-mode .header-buttons button{
+
+    background:#c8a64b;
+    color:white;
+
+}
+
+body.dark-mode .dato{
+    color:#ddd;
+}
+
+body.dark-mode .ultima-datos strong{
+    color:#ccc;
+}
+body.dark-mode #buscarMoneda{
+
+    background:#1f2937;
+    color:white;
+    border:2px solid #c8a64b;
+
+}
+body.dark-mode input,
+body.dark-mode select{
+
+    background:#374151;
+    color:white;
+    border:1px solid #555;
+
+}
+.pais {
+    fill: #2c2c2c;
+    stroke: #444;
+    transition: 0.3s;
+}
+
+.pais.completado {
+    fill: gold;
+    filter: drop-shadow(0 0 6px gold);
+}
