@@ -72,6 +72,12 @@
 </div>
 {% endif %}
     <!-- Formulario de filtro -->
+<div class="buscador">
+    <input
+        type="text"
+        id="buscarMoneda"
+        placeholder="🔍 Buscar moneda, país, año, valor, tipo o rareza...">
+</div>
     <form method="GET" action="{{ url_for('index') }}" class="filter-form">
       <div class="filter-group">
         <label for="filter_tipo">Filtrar por Tipo de Moneda:</label>
@@ -112,8 +118,8 @@
 
     {% for moneda in monedas %}
 
-<div class="moneda-card">
-
+<div class="moneda-card"
+     data-search="{{ moneda.valor }} {{ moneda.pais }} {{ moneda.anio }} {{ moneda.tipo }} {{ moneda.rareza }}">
 <div class="coin-viewer">
 
     <img
@@ -124,7 +130,6 @@
         data-detras="{{ url_for('static', filename='imagenes/' ~ moneda.imagen_detras) }}"
         data-side="{% if moneda.tipo == 'Euro' %}back{% else %}front{% endif %}"
         onclick="openModal(this)">
-
 </div>
    <div class="datos-moneda">
 
@@ -269,6 +274,33 @@ function flipCoin(button){
             currentImg = null;
         }
     });
+const buscador = document.getElementById("buscarMoneda");
+
+if (buscador) {
+
+    buscador.addEventListener("keyup", function () {
+
+        const texto = this.value.toLowerCase();
+
+        document.querySelectorAll(".moneda-card").forEach(card => {
+
+            const datos = card.dataset.search.toLowerCase();
+
+            if (datos.includes(texto)) {
+
+                card.style.display = "";
+
+            } else {
+
+                card.style.display = "none";
+
+            }
+
+        });
+
+    });
+
+}
   </script>
 </body>
 </html>
